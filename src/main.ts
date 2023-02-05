@@ -1,23 +1,32 @@
-import {Markit} from "./base";
+import Markit, {parse, render} from "./base";
 
 const testStr = `
 
-| this | is  | header |
-|------|-----|--------|
-| this | is  | row0   |
-| this | is  | row1   |
+\`\`\` jsx
 
-[![This is beautiful!](https://images.unsplash.com/photo-1613967193490-1d17b930c1a1?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhdXRpZnVsJTIwbGFuZHNjYXBlfGVufDB8fDB8fA%3D%3D&w=1000&q=80 "hello react" 30% right)](https://images.unsplash.com/photo-1613967193490-1d17b930c1a1?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhdXRpZnVsJTIwbGFuZHNjYXBlfGVufDB8fDB8fA%3D%3D&w=1000&q=80)
-![react](https://images.unsplash.com/photo-1613967193490-1d17b930c1a1?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhdXRpZnVsJTIwbGFuZHNjYXBlfGVufDB8fDB8fA%3D%3D&w=1000&q=80 "hello react" 50% left)
+const a = 1
 
+\`\`\`
+* okk \`no\`
 `
+
+Markit.addRule.block({
+    name: "CodeBlock",
+    rule: "default",
+    view: content => `<div style="background-color: blue">${content}</div>`
+})
+Markit.addRule.inline({
+    name: "Code",
+    rule: "default",
+    view: content => `<div style="background-color: red">${content}</div>`
+})
 
 // console.log(testStr)
 // content -> Inline(ast) string
 // content: {item->ast, content:}[] Inline
 
-// console.log(Markit.parse(testStr))
-const bb = Markit.render(testStr)
+console.log(parse(testStr))
+const bb = render(testStr)
 // console.log(bb)
 
 document.getElementById("app")!.innerHTML = bb

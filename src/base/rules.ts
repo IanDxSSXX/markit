@@ -6,7 +6,6 @@ import {defaultInlineMap} from "../renderer/defaultRules/inline";
 import {MarkdownerViewFunc} from "../renderer/type";
 import {defaultBlockMap} from "../renderer/defaultRules/block";
 import {MarkitClass} from "./markit";
-import {Inline} from "../renderer/render";
 
 
 export interface MarkdownerBlockRuleInterface {
@@ -65,7 +64,7 @@ export class RuleAdder {
         }
 
         this.markdowner.blockRules[name] = rule
-        if (!!view) {
+        if (view) {
             let newView: any = view
             if (view === "default") {
                 newView = defaultBlockMap[name]
@@ -97,21 +96,14 @@ export class RuleAdder {
         }
         this.markdowner.inlineRules[name] = rule
 
-        if (!!view) {
+        if (view) {
             // ---- react view
-            let newView: any
+            let newView: any = view
             if (view === "default") {
                 newView = defaultInlineMap[name]
                 if (newView === undefined) {
                     MarkdownerLogger.warn("Add inline view", `No default inline view of ruleName ${name}, skipping...`)
                     return
-                }
-            } else {
-                newView = (content: any, props: any) => {
-                    if (content instanceof Array && content.length>0 && content[0].level==="inline") {
-                        content = Inline(content)
-                    }
-                    return (view as MarkdownerViewFunc)(content, props)
                 }
             }
             this.markdowner.inlineRuleMap[name] = newView

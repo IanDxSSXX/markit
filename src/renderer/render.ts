@@ -5,16 +5,32 @@ import {defaultBlockMap} from "./defaultRules/block";
 export const MarkdownerMapBlock: {value?: any} = {}
 export const MarkdownerMapInline: {value?: any} = {}
 
+export function resolveInlineContent(content: any): any {
+    if (content instanceof Array && content.length>0 && content[0].level==="inline") {
+        return Inline(content)
+    }
+    return content
+}
+export function resolveBlockContent(content: any): any {
+    if (content instanceof Array && content.length>0) {
+        if (content[0].level==="inline") {
+            content = Inline(content)
+        } else if (content[0].level==="block") {
+            content = Block(content)
+        } else if (content[0].item) {
+            content = content.map(({item, content}) => ({item: Inline(item), content: Block(content)}))
+        }
+    }
+    return content
+}
+
 
 function InlineElement(markdownAST: MarkdownAST ) {
     let map = MarkdownerMapInline.value ?? defaultInlineMap
     let inlineFunc = map[markdownAST.type]
     let element
     if (inlineFunc) {
-        let content = markdownAST.content
-        if (content instanceof Array && content.length>0 && content[0].level==="inline") {
-            content = Inline(content)
-        }
+        const content = resolveInlineContent(markdownAST.content)
         element = inlineFunc(content, markdownAST.props)
     } else {
         MarkdownerLogger.warn("Render-inline", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)
@@ -34,18 +50,7 @@ function BlockElement(markdownAST: MarkdownAST) {
     let blockFunc = map[markdownAST.type]
     let element
     if (!!blockFunc) {
-        let content = markdownAST.content
-        if (typeof content === 'string') return content
-        if (content instanceof Array && content.length>0) {
-           if (content[0].level==="inline") {
-               content = Inline(content)
-            } else if (content[0].item) {
-               content = content.map(({item, content}) => ({item: Inline(item), content: Block(content)}))
-            } else if (content[0].level==="block") {
-               content = Block(content)
-           }
-        }
-
+        const content = resolveBlockContent(markdownAST.content)
         element = blockFunc(content, markdownAST.props)
     } else {
         MarkdownerLogger.warn("Render-block", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)

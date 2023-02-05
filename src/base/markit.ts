@@ -86,4 +86,8 @@ export class MarkitClass {
 }
 
 export const Markit = new MarkitClass()
+export const incrementalParse = Markit.incrementalParse.bind(Markit)
+export const parse = Markit.parse.bind(Markit)
+export const render = Markit.render.bind(Markit)
+
 Markit.init()

@@ -1,7 +1,10 @@
 {
   "name": "@iandx/markit",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

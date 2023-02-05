@@ -128,11 +128,15 @@ export const blockDefaultRules: BlockMarkdownRules = {
     CodeBlock: {
         tags: {round: / *```/},
         parseContent: text => {
-            text = text.replace(/^```|```$/g, "")
-            let language = (text.match(/^.+?\n/g) ?? ["text"])[0].replace("```", "").trim()
+            text = text.replace(/ *```|```$/g, "")
             let content = text.replace(/^.+?\n/g, "")
-            return {language, content}
+            return content
         },
+        getProps: raw => {
+            const text = raw.replace(/ *```|```$/g, "")
+            const language = (text.match(/^.+?\n/g) ?? ["text"])[0].replace("```", "").trim()
+            return {language}
+        }
     },
     Table: {
         tags: {
