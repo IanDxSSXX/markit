@@ -141,7 +141,7 @@ export namespace C {
                 let [props, trimedText] = BlockTagHandler.defaultGetProp(raw)
                 trimedText = trimedText = blockAST.rule?.trimText(trimedText) ?? trimedText
                 if (this.softBreak && (blockAST.isContainer || blockAST.type === "Paragraph")) {
-                    trimedText = trimedText.replaceAll(/\n */g, " ").trim().replaceAll(/\\$/g, "").trim()
+                    trimedText = trimedText.replace(/\n */g, " ").trim().replace(/\\$/g, "").trim()
                 } else {
                     trimedText = trimedText.trim()
                 }
@@ -320,7 +320,7 @@ export namespace C {
             content = content.replaceAll("\t", " ".repeat(this.tabSpaceNum))
             content = handleAsciiConflict(content)
             // ---- empty line
-            content = content.replaceAll(/\r\n|\r/g, "\n")
+            content = content.replace(/\r\n|\r/g, "\n")
 
             return this.split(content)
         }

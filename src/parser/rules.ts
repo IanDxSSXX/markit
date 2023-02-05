@@ -49,7 +49,7 @@ export const inlineDefaultRules: InlineMarkdownRules = {
     },
     Link: {
         tags: {wrap: ["[", /]\(.+?\)/]},
-        getProps: (text: string) => ({linkUrl: text.match(/\(.+?\)$/)![0].replaceAll(/[()]/g, "")}),
+        getProps: (text: string) => ({linkUrl: text.match(/\(.+?\)$/)![0].replace(/[()]/g, "")}),
         order: -3
     },
     Escape: {
@@ -66,7 +66,7 @@ export const inlineDefaultRules: InlineMarkdownRules = {
             if (/<[a-zA-Z]+\/>/.test(raw)) return true
             let leftTag = raw.match(/<[a-zA-Z]+/)![0]
             let rightTag = raw.match(/<\/[a-zA-Z]+>/)![0]
-            return leftTag.replaceAll(/[<>]/g, "").trim() === rightTag.replaceAll(/[<>/]/g, "").trim()
+            return leftTag.replace(/[<>]/g, "").trim() === rightTag.replace(/[<>/]/g, "").trim()
         },
         trimText: raw => raw,
         allowNesting: false
@@ -77,14 +77,14 @@ export const inlineDefaultRules: InlineMarkdownRules = {
     },
     FootnoteSup: {
         tags: {wrap: ["[^", "]"]},
-        getProps: (text) => ({footnoteSupId: uid()}),
+        getProps: () => ({footnoteSupId: uid()}),
         order: -2,
         allowNesting: false
     },
     LinkTag: {
         tags: {wrap: ["[", "]"]},
         order: -1,
-        getProps: raw => ({tagName: raw.replaceAll(/[[\]]/g, "").trim()})
+        getProps: raw => ({tagName: raw.replace(/[[\]]/g, "").trim()})
     },
 
 }
@@ -106,7 +106,7 @@ export const blockDefaultRules: BlockMarkdownRules = {
             }
             return {headingLevel}
         },
-        trimText: text => text.replaceAll(/\n((===+)|(---+))/g, "").replaceAll(/^#{1,5} /g, "")
+        trimText: text => text.replace(/\n((===+)|(---+))/g, "").replace(/^#{1,5} /g, "")
     },
     OrderedList: {
         tags: {leading: / *[0-9]\. /},
@@ -120,7 +120,7 @@ export const blockDefaultRules: BlockMarkdownRules = {
     Blockquote: {
         tags: {exact: /(?:(?:> *)+ .+?(?:\n|$))*(?:> *)+ .+?/},
         parseContent: (text, handler) => {
-            let newText = text.replaceAll(/\n> */g, "\n").replaceAll(/^> */g, "")
+            let newText = text.replace(/\n> */g, "\n").replace(/^> */g, "")
             let parser = handler.parser.new()
             return parser.parse(newText)
         }
@@ -208,11 +208,11 @@ export const blockDefaultRules: BlockMarkdownRules = {
             let linkUrl: string | undefined
             if (/^\[!\[.+?]\(.+?(?: .+?)*? *\)]\(.+?\)$/.test(text)) {
                 // ---- with link
-                linkUrl = text.match(/\(.+?\)$/)![0].replaceAll(/[()]/g, "")
-                text = text.replaceAll(/^\[|\([^\]]+?\)$/g, "")
+                linkUrl = text.match(/\)]\(.+?\)$/)![0].replace(/[\]()]/g, "")
+                text = text.replace(/(^\[)|(]\([^\]]+?\)$)/g, "")
             }
-            let altContent = text.match(/!\[.+?]/)![0].replaceAll(/[![\]]/g, "")
-            let content: string = text.match(/\(.+?(?: .+?)*\)/)![0].replaceAll(/[()]/g, "")
+            let altContent = text.match(/!\[.+?]/)![0].replace(/[![\]]/g, "")
+            let content: string = text.match(/\(.+?(?: .+?)*\)/)![0].replace(/[()]/g, "")
             let splitContent: string[] = [
                 ...flattened(content.split(/".+?"/).map(c=>c.split(" ").map(i=>i.trim()))),
                 ...(content.match(/".+?"/g) ?? [])
@@ -231,13 +231,13 @@ export const blockDefaultRules: BlockMarkdownRules = {
     },
     Latex: {
         tags: {round: "$$$"},
-        parseContent: (text) => text.replaceAll(/^\n|\n$/g, ""),
+        parseContent: (text) => text.replace(/^\n|\n$/g, ""),
         order: -1
     },
     Footnote: {
         tags: {leading: /\[\^.+?]:/},
         getProps: (text, state) => {
-            let noteName = text.match(/^\[\^.+?]:/)![0].replaceAll(/[[\]:^]/g, "").trim()
+            let noteName = text.match(/^\[\^.+?]:/)![0].replace(/[[\]:^]/g, "").trim()
 
             if (state.footnoteArr === undefined) state.footnoteArr = {}
             let footnoteArr = state.footnoteArr
@@ -258,7 +258,7 @@ export const blockDefaultRules: BlockMarkdownRules = {
         tags: {leading: /\[.+?]:/},
         order: 2,
         getProps: raw => ({
-            tagName: raw.match(/\[.+?]/)![0].replaceAll(/[[\]]/g, "").trim(),
+            tagName: raw.match(/\[.+?]/)![0].replace(/[[\]]/g, "").trim(),
             tagUrl: raw.replace(/\[.+?]:/, "").trim(),
             visible: false
         })
