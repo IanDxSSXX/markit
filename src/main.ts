@@ -1,19 +1,24 @@
 import Markit, {parse, render} from "./base";
 
 const testStr = `
-<div style="background-color: aqua">fuck me</div>
-\`<div style="background-color: aqua">fuck me</div>\`
+\`\`\`js
+<div style="background-color: aqua">fuck</div>
+<div style="background-color: aqua">fuck</div>
+<div style="background-color: aqua">fuck</div>
+\`\`\`
+
+fsjfsf\`<div style="background-color: aqua">fuck</div>sfsf\`
 `
 
 Markit.addRule.block({
     name: "CodeBlock",
     rule: "default",
-    view: content => `<div style="background-color: blue">${content}</div>`
-})
-Markit.addRule.inline({
-    name: "Code",
-    rule: "default",
-    view: content => `<div style="background-color: red">${content}</div>`
+    view: content => {
+        const newEl = document.createElement("div")
+        newEl.innerText = content
+        newEl.style.backgroundColor = "red"
+        return newEl
+    }
 })
 
 // console.log(testStr)

@@ -25,5 +25,10 @@ export const defaultInlineMap: MarkdownerRuleMap = {
             return `<a href="${linkBlocks[0].props.tagUrl}">${tagName}</a>`
         }
     },
-    Code: content => `<span style="background-color: #eeeeee; border-radius: 3px; color: #e37d7d; letter-spacing: 0.5px; font-size: 95%; padding: 0.2em 0.4em">${content}</span>`
+    Code: content => {
+        const codeEl = document.createElement("span")
+        codeEl.innerHTML = `<span style="background-color: #eeeeee; border-radius: 3px; color: #e37d7d; letter-spacing: 0.5px; font-size: 95%; padding: 0.2em 0.4em"></span>`
+        ;(codeEl.firstChild! as HTMLElement).innerText = content
+        return codeEl.firstChild! as HTMLElement
+    }
 }

@@ -7,21 +7,14 @@ export const MarkdownerMapInline: {value?: any} = {}
 
 
 
-function resolveHTMLString(htmlStr: string): string {
-    const tmpHTML = document.createElement("div");
-    tmpHTML.innerText = htmlStr
-    return tmpHTML.innerHTML
-}
-export function resolveInlineContent(content: any, raw: string): any {
+export function resolveInlineContent(content: any): any {
     // ---- 只有当content和raw不相等时，才做转义，因为可以判断出里面的字符串全是inner的
-    if (typeof content === "string" && content !== raw) return resolveHTMLString(content)
     if (content instanceof Array && content.length>0 && content[0].level==="inline") {
         return Inline(content)
     }
     return content
 }
-export function resolveBlockContent(content: any, raw: string): any {
-    if (typeof content === "string" && content !== raw) return resolveHTMLString(content)
+export function resolveBlockContent(content: any): any {
     if (content instanceof Array && content.length>0) {
         if (content[0].level==="inline") {
             content = Inline(content)
@@ -40,7 +33,7 @@ function InlineElement(markdownAST: MarkdownAST ) {
     let inlineFunc = map[markdownAST.type]
     let element
     if (inlineFunc) {
-        const content = resolveInlineContent(markdownAST.content, markdownAST.raw)
+        const content = resolveInlineContent(markdownAST.content)
         element = inlineFunc(content, markdownAST.props)
     } else {
         MarkdownerLogger.warn("Render-inline", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)
@@ -51,7 +44,13 @@ function InlineElement(markdownAST: MarkdownAST ) {
 
 export function Inline(inlineASTs: MarkdownAST[]) {
     return inlineASTs
-        .map(inlineAST => InlineElement(inlineAST))
+        .map(inlineAST => {
+            const out = InlineElement(inlineAST)
+            if (typeof out === "string") {
+                return out
+            }
+            return out.outerHTML
+        })
         .join("")
 }
 
@@ -60,7 +59,7 @@ function BlockElement(markdownAST: MarkdownAST) {
     let blockFunc = map[markdownAST.type]
     let element
     if (!!blockFunc) {
-        const content = resolveBlockContent(markdownAST.content, markdownAST.raw)
+        const content = resolveBlockContent(markdownAST.content)
         element = blockFunc(content, markdownAST.props)
     } else {
         MarkdownerLogger.warn("Render-block", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)
@@ -78,7 +77,13 @@ export function Block(markdownASTs: MarkdownAST[]) {
             order: markdownAST.props?.elementOrder ?? 1
         }))
         .sort((a: any, b: any) => a.order - b.order)
-        .map((t: any) => BlockElement(t.ast))
+        .map((t: any) => {
+            const out = BlockElement(t.ast)
+            if (typeof out === "string") {
+                return out
+            }
+            return out.outerHTML
+        })
         .join("")
 }
 
