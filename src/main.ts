@@ -1,13 +1,8 @@
 import Markit, {parse, render} from "./base";
 
 const testStr = `
-
-\`\`\` jsx
-
-const a = 1
-
-\`\`\`
-* okk \`no\`
+<div style="background-color: aqua">fuck me</div>
+\`<div style="background-color: aqua">fuck me</div>\`
 `
 
 Markit.addRule.block({
@@ -24,7 +19,6 @@ Markit.addRule.inline({
 // console.log(testStr)
 // content -> Inline(ast) string
 // content: {item->ast, content:}[] Inline
-
 console.log(parse(testStr))
 const bb = render(testStr)
 // console.log(bb)

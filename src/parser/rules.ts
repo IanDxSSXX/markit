@@ -45,6 +45,7 @@ export const inlineDefaultRules: InlineMarkdownRules = {
     Underline: {wrap: ["<u>", "</u>"], round: ["_", "[underline]"]},
     Code: {
         tags: {round: ["`", "[code]"]},
+        allowNesting: false,
         recheckMatch: raw => (raw.match(/`/g) ?? []).length % 2 === 0
     },
     Link: {
