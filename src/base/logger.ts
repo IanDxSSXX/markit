@@ -1,5 +1,5 @@
 namespace C {
-    export class MarkdownerLogger {
+    export class MarkitLogger {
         debugLevel = -1
         warn(position: string, message: string|any) {
             if (typeof message === "string") {
@@ -29,4 +29,4 @@ namespace C {
 }
 
 
-export const MarkdownerLogger = new C.MarkdownerLogger()
+export const MarkitLogger = new C.MarkitLogger()

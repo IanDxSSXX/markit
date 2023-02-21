@@ -1,5 +1,5 @@
 import {MarkdownAST} from "../base/ast";
-import {MarkdownerLogger} from "../base/logger";
+import {MarkitLogger} from "../base/logger";
 import {defaultInlineMap} from "./defaultRules/inline";
 import {defaultBlockMap} from "./defaultRules/block";
 export const MarkdownerMapBlock: {value?: any} = {}
@@ -36,7 +36,7 @@ function InlineElement(markdownAST: MarkdownAST ) {
         const content = resolveInlineContent(markdownAST.content)
         element = inlineFunc(content, markdownAST.props)
     } else {
-        MarkdownerLogger.warn("Render-inline", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)
+        MarkitLogger.warn("Render-inline", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)
         element = markdownAST.raw
     }
     return element
@@ -62,7 +62,7 @@ function BlockElement(markdownAST: MarkdownAST) {
         const content = resolveBlockContent(markdownAST.content)
         element = blockFunc(content, markdownAST.props)
     } else {
-        MarkdownerLogger.warn("Render-block", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)
+        MarkitLogger.warn("Render-block", `didn't have a block map named ${markdownAST.type}, treat it as plain text`)
         element = `<div>${markdownAST.raw}</div>`
     }
 

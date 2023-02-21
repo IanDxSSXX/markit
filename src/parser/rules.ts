@@ -1,15 +1,8 @@
-import {InlineMarkdownTagExtend, InlineMarkdownTag} from "./inline/regex";
-import {BlockMarkdownTagExtend, BlockMarkdownTag} from "./block/regex";
 import {flattened} from "../base/utils";
 import {uid} from "../base/utils";
 import {MarkdownAST} from "../base/ast";
+import {BlockMarkdownRules, InlineMarkdownRules} from "./types";
 
-export interface InlineMarkdownRules {
-    [key: string]: InlineMarkdownTag | InlineMarkdownTagExtend
-}
-export interface BlockMarkdownRules {
-    [key: string]: BlockMarkdownTag | BlockMarkdownTagExtend
-}
 
 export type DefaultInlineRules = "Italic" | "Bold" | "Strike" | "Underline" | "Code" | "Link" | "Escape" | "Superscript" |
     "Subscript" | "Highlight" | "HtmlTag" | "Math" | "FootnoteSup" | "LinkTag"
@@ -17,85 +10,116 @@ export type DefaultBlockRules = "Heading" | "OrderedList" | "UnorderedList" | "B
     "CheckList" | "Image" | "MathBlock" | "Latex" | "Footnote" | "LinkTagBlock" | "Comment"
 
 
+
+export namespace IRegHelper {
+    type Reg = string | RegExp
+    function getRegString(reg: Reg) {
+        return typeof reg === "string" ? reg : reg.source
+    }
+    export function round(reg: Reg) {
+        const regString = getRegString(reg)
+        return new RegExp(`${regString}(\\S+?[\\s\\S]*?)${regString}`)
+    }
+
+    export function wrap(leftReg: Reg, rightReg: Reg) {
+        const leftRegString = getRegString(leftReg)
+        const rightRegString = getRegString(rightReg)
+        return new RegExp(`${leftRegString}(\\S+?[\\s\\S]*?)${rightRegString}`)
+
+    }
+}
+
+export namespace BRegHelper {
+    type Reg = string | RegExp
+    function getRegString(reg: Reg) {
+        return typeof reg === "string" ? reg : reg.source
+    }
+    export function round(reg: Reg) {
+        const regString = getRegString(reg)
+        return new RegExp(`(?:\\n|^)${regString}((?:.|\\n)+?)${regString}(?=\\n|$)`)
+    }
+
+    export function wrap(leftReg: Reg, rightReg: Reg) {
+        const leftRegString = getRegString(leftReg)
+        const rightRegString = getRegString(rightReg)
+        return new RegExp(`(?:\\n|^)${leftRegString}((?:.|\\n)+?)${rightRegString}(?=\\n|$)`)
+    }
+
+    export function leading(reg: Reg) {
+        const regString = getRegString(reg)
+        return new RegExp(`(?:\\n|^)${regString}(.+)(?=\\n|$)`)
+    }
+}
 export const inlineDefaultRules: InlineMarkdownRules = {
     // ---- the order doesn't matter, default order is 1
     Italic: {
-        tags: {
-            round: "[em]",
-            exact: [
-                /\*(?!\s)(?:(?:[^*]*?(?:\*\*[^*]+?\*\*[^*]*?)+?)+?|[^*]+)\*/,
-            ]
-        },
-        trimText: (text: string) => text.replace(/^\*|\*$/g, ""),
+        tag: [IRegHelper.round(/\[em]/), /\*((?!\s)(?:(?:[^*]*?(?:\*\*[^*]+?\*\*[^*]*?)+?)+?|[^*]+))\*/],
     },
     Bold: {
-        tags: {
-            round: "[bold]",
-            exact: [
-                /\*\*(?!\s)(?:[^*]+?|(?:[^*]*(?:\*[^*]+\*[^*]*)+?)+?)\*\*/,
-            ]
-        },
-        trimText: (text: string) => text.replace(/^\*\*|\*\*$/g, ""),
+        tag: [IRegHelper.round(/\[bold]/), /\*\*((?!\s)(?:[^*]+?|(?:[^*]*(?:\*[^*]+\*[^*]*)+?)+?))\*\*/],
         order: 0
     },
     Strike: {
-        tags: {round: ["~~", "[strike]"]},
+        tag: [IRegHelper.round(/~~/), IRegHelper.round(/\[strike]/)],
         order: 0 // prior to subscript
     },
-    Underline: {wrap: ["<u>", "</u>"], round: ["_", "[underline]"]},
+    Underline: {
+        tag: [IRegHelper.wrap("<u>", "</u>"), IRegHelper.round("_"), IRegHelper.round(/\[underline]/)],
+    },
     Code: {
-        tags: {round: ["`", "[code]"]},
+        tag: IRegHelper.round("`"),
         allowNesting: false,
-        recheckMatch: raw => (raw.match(/`/g) ?? []).length % 2 === 0
     },
     Link: {
-        tags: {wrap: ["[", /]\(.+?\)/]},
-        getProps: (text: string) => ({linkUrl: text.match(/\(.+?\)$/)![0].replace(/[()]/g, "")}),
+        tag: IRegHelper.wrap(/\[/, /]\(.+?\)/),
+        getProps: (raw: string) => ({linkUrl: raw.match(/\(.+?\)$/)![0].replace(/[()]/g, "")}),
         order: -3
     },
     Escape: {
-        tags: {exact: /\\[*~<>_=`$\\[\]]/},
-        trimText: text => text.replace("\\", ""),
+        tag: /\\([*~<>_=`$\\[\]])/,
         order: -1000 // ---- must be the first
     },
-    Superscript: {round: "^"},
-    Subscript: {round: "~"},
-    Highlight: {round: "=="},
+    Superscript: {
+        tag: IRegHelper.round(/\^/),
+    },
+    Subscript: {
+        tag: IRegHelper.round("~"),
+    },
+    Highlight: {
+        tag: IRegHelper.round("=="),
+    },
     HtmlTag: {
-        tags: {wrap: [/<[a-zA-Z]+(?: .+?=.+?)* *>/, /<\/[a-zA-Z]+>/], exact: /<[a-zA-Z]+\/>/},
-        recheckMatch: raw => {
+        tag: [IRegHelper.wrap(/<[a-zA-Z]+(?: .+?=.+?)* *>/, /<\/[a-zA-Z]+>/), /<[a-zA-Z]+\/>/],
+        recheck: raw => {
             if (/<[a-zA-Z]+\/>/.test(raw)) return true
             let leftTag = raw.match(/<[a-zA-Z]+/)![0]
             let rightTag = raw.match(/<\/[a-zA-Z]+>/)![0]
             return leftTag.replace(/[<>]/g, "").trim() === rightTag.replace(/[<>/]/g, "").trim()
         },
-        trimText: raw => raw,
         allowNesting: false
     },
     Math: {
-        tags: {round: "$"},
+        tag: IRegHelper.round(/\$/),
         allowNesting: false,
     },
     FootnoteSup: {
-        tags: {wrap: ["[^", "]"]},
+        tag: IRegHelper.wrap(/\[\^/, "]"),
         getProps: () => ({footnoteSupId: uid()}),
         order: -2,
         allowNesting: false
     },
     LinkTag: {
-        tags: {wrap: ["[", "]"]},
+        tag: IRegHelper.wrap(/\[/, /]/),
         order: -1,
         getProps: raw => ({tagName: raw.replace(/[[\]]/g, "").trim()})
     },
 
 }
 
+
 export const blockDefaultRules: BlockMarkdownRules = {
     Heading: {
-        tags: {
-            leading: /#{1,5} /,
-            exact: [/.+?\n===+ */, /.+? ?\n---+ */]
-        },
+        tag: [BRegHelper.leading(/#{1,5} /), /(.+?)\n===+ */, /(.+?)\n---+ */],
         getProps: (text) => {
             let headingLevel: number
             let hashHeadingMatch = text.match(/^#+ /)
@@ -107,171 +131,170 @@ export const blockDefaultRules: BlockMarkdownRules = {
             }
             return {headingLevel}
         },
-        trimText: text => text.replace(/\n((===+)|(---+))/g, "").replace(/^#{1,5} /g, "")
     },
-    OrderedList: {
-        tags: {leading: / *[0-9]\. /},
-        getProps: (text) => ({start: +text.match(/\d+/g)![0]}),
-        blockType: "container"
-    },
-    UnorderedList: {
-        tags: {leading: [/ *[*+-] /]},
-        blockType: "container"
-    },
-    Blockquote: {
-        tags: {exact: /(?:(?:> *)+ .+?(?:\n|$))*(?:> *)+ .+?/},
-        parseContent: (text, handler) => {
-            let newText = text.replace(/\n> */g, "\n").replace(/^> */g, "")
-            let parser = handler.parser.new()
-            return parser.parse(newText)
-        }
-    },
-    CodeBlock: {
-        tags: {round: / *```/},
-        parseContent: text => {
-            text = text.replace(/ *```|```$/g, "")
-            let content = text.replace(/^.+?\n/g, "")
-            return content
-        },
-        getProps: raw => {
-            const text = raw.replace(/ *```|```$/g, "")
-            const language = (text.match(/^.+?\n/g) ?? ["text"])[0].replace("```", "").trim()
-            return {language}
-        }
-    },
-    Table: {
-        tags: {
-            exact: / *\|(?:.+?\|)+\n *\|(?: *[-*:]{1,2}-+[-*:]{1,2}? *\|)+(?:\n *\|(?:.+?\|)+)*/
-        },
-        parseContent: (text, handler) => {
-            let header: MarkdownAST[][]
-            let allRows = text.split("\n").filter(r=>r!=="")
-            header = allRows[0].split("|").map(h=>h.trim()).filter(h=>h!=="").map(i=>handler.parser.inlineParser.new().parse(i.trim()))
-            let headerAndRows: MarkdownAST[][][] = [header]
-
-            if (allRows.length > 2) {
-                headerAndRows.push(...allRows.slice(2).map(r=>r.trim().split("|").filter(i=>i!=="").map(i=>handler.parser.inlineParser.new().parse(i.trim()))))
-            }
-            return headerAndRows
-
-        },
-        recheckMatch: raw => {
-            let rowNum: number | undefined
-            for (let line of raw.split(/\n/g).filter(l=>l.trim()!=="")) {
-                let newRowNum = line.split("|").length
-                if (rowNum !== undefined && newRowNum !== rowNum) return false
-                rowNum = newRowNum
-            }
-            return true
-        },
-        getProps: raw => {
-            let allRows = raw.split("\n").filter(r=>r!=="")
-            let column = allRows[0].split("|").map(h=>h.trim()).filter(h=>h!=="").length
-            let headerAligns: ("left"|"center"|"right")[] = Array(column).fill("center")
-            let rowAligns: ("left"|"center"|"right")[] = Array(column).fill("left")
-
-            if (allRows.length !== 1) {
-                let alignTags = allRows[1].split("|").map(i=>i.trim()).filter(i=>i!=="")
-                for (let [idx, tag] of alignTags.entries()) {
-                    // ---- header alignment
-                    if (/^:?\*[^*]+$/.test(tag)) {
-                        headerAligns[idx] = "left"
-                    } else if(/^[^*]+\*:?$/.test(tag)) {
-                        headerAligns[idx] = "right"
-                    } else if(/^:?\*[:-]+\*:?$/.test(tag)) {
-                        headerAligns[idx] = "center"
-                    }
-                    // ---- row alignment
-                    if (/^\*?:[^:]+$/.test(tag)) {
-                        rowAligns[idx] = "left"
-                    } else if(/^[^:]+:\*?$/.test(tag)) {
-                        rowAligns[idx] = "right"
-                    } else if(/^\*?:[*-]+:\*?$/.test(tag)) {
-                        rowAligns[idx] = "center"
-                    }
-                }
-            }
-            return {headerAligns, rowAligns}
-        }
-    },
-    Divider: {
-        tags: {exact: /---{1,4}(?:\[(?:dashed|dotted|solid)])?/},
-        order: 2, // ---- behind heading1
-        getProps: text => ({dividerType: (text.match(/dashed|dotted|solid/) ?? ["solid"])[0]})
-    },
-    CheckList: {
-        tags: {leading: / *- \[[ x]] /},
-        blockType: "container",
-        order:0,
-        getProps: text => ({isChecked: text.match(/(?: {2})*- \[[ x]] /)![0].includes("x")})
-    },
-    Image: {
-        tags: {exact: /!\[.+?]\(.+?(?: .+?)*? *\)|\[!\[.+?]\(.+?(?: .+?)*? *\)]\(.+?\)/},
-        parseContent: _ => undefined,
-        getProps: text => {
-            text = text.trim()
-            let linkUrl: string | undefined
-            if (/^\[!\[.+?]\(.+?(?: .+?)*? *\)]\(.+?\)$/.test(text)) {
-                // ---- with link
-                linkUrl = text.match(/\)]\(.+?\)$/)![0].replace(/[\]()]/g, "")
-                text = text.replace(/(^\[)|(]\([^\]]+?\)$)/g, "")
-            }
-            let altContent = text.match(/!\[.+?]/)![0].replace(/[![\]]/g, "")
-            let content: string = text.match(/\(.+?(?: .+?)*\)/)![0].replace(/[()]/g, "")
-            let splitContent: string[] = [
-                ...flattened(content.split(/".+?"/).map(c=>c.split(" ").map(i=>i.trim()))),
-                ...(content.match(/".+?"/g) ?? [])
-            ].filter(i=>i!=="")
-            let imageUrl = splitContent[0]
-            let otherProps = splitContent.slice(1)
-            let title = otherProps.filter(i=>/^".+?"$/.test(i))[0].replaceAll('"', "") ?? ""
-            let zoomSize = otherProps.filter(i=>/^[0-9]{1,3}%$/.test(i))[0] ?? "50%"
-            let alignment = otherProps.filter(i=>/^left|right|center$/.test(i))[0] ?? "left"
-            return {altContent, imageUrl, title, zoomSize, alignment, linkUrl}
-        }
-    },
-    MathBlock: {
-        tags: {round: "$$"},
-        parseContent: (text) =>  text
-    },
-    Latex: {
-        tags: {round: "$$$"},
-        parseContent: (text) => text.replace(/^\n|\n$/g, ""),
-        order: -1
-    },
-    Footnote: {
-        tags: {leading: /\[\^.+?]:/},
-        getProps: (text, state) => {
-            let noteName = text.match(/^\[\^.+?]:/)![0].replace(/[[\]:^]/g, "").trim()
-
-            if (state.footnoteArr === undefined) state.footnoteArr = {}
-            let footnoteArr = state.footnoteArr
-            if (footnoteArr[noteName] === undefined) {
-                footnoteArr[noteName] = 0
-            } else {
-                footnoteArr[noteName] += 1
-            }
-            return {
-                elementOrder: 100,
-                noteName,
-                footnoteIdx: footnoteArr[noteName],
-                rerender: true
-            }
-        },
-    },
-    LinkTagBlock: {
-        tags: {leading: /\[.+?]:/},
-        order: 2,
-        getProps: raw => ({
-            tagName: raw.match(/\[.+?]/)![0].replace(/[[\]]/g, "").trim(),
-            tagUrl: raw.replace(/\[.+?]:/, "").trim(),
-            visible: false
-        })
-    },
-    Comment: {
-        tags: {leading: /\/\//},
-        getProps: ()=>({visible: false})
-    }
+    // OrderedList: {
+    //     tags: {leading: / *[0-9]\. /},
+    //     getProps: (text) => ({start: +text.match(/\d+/g)![0]}),
+    //     blockType: "container"
+    // },
+    // UnorderedList: {
+    //     tags: {leading: [/ *[*+-] /]},
+    //     blockType: "container"
+    // },
+    // Blockquote: {
+    //     tags: {exact: /(?:(?:> *)+ .+?(?:\n|$))*(?:> *)+ .+?/},
+    //     parseContent: (text, handler) => {
+    //         let newText = text.replace(/\n> */g, "\n").replace(/^> */g, "")
+    //         let parser = handler.parser.new()
+    //         return parser.parse(newText)
+    //     }
+    // },
+    // CodeBlock: {
+    //     tags: {round: / *```/},
+    //     parseContent: text => {
+    //         text = text.replace(/ *```|```$/g, "")
+    //         let content = text.replace(/^.+?\n/g, "")
+    //         return content
+    //     },
+    //     getProps: raw => {
+    //         const text = raw.replace(/ *```|```$/g, "")
+    //         const language = (text.match(/^.+?\n/g) ?? ["text"])[0].replace("```", "").trim()
+    //         return {language}
+    //     }
+    // },
+    // Table: {
+    //     tags: {
+    //         exact: / *\|(?:.+?\|)+\n *\|(?: *[-*:]{1,2}-+[-*:]{1,2}? *\|)+(?:\n *\|(?:.+?\|)+)*/
+    //     },
+    //     parseContent: (text, handler) => {
+    //         let header: MarkdownAST[][]
+    //         let allRows = text.split("\n").filter(r=>r!=="")
+    //         header = allRows[0].split("|").map(h=>h.trim()).filter(h=>h!=="").map(i=>handler.parser.inlineParser.new().parse(i.trim()))
+    //         let headerAndRows: MarkdownAST[][][] = [header]
+    //
+    //         if (allRows.length > 2) {
+    //             headerAndRows.push(...allRows.slice(2).map(r=>r.trim().split("|").filter(i=>i!=="").map(i=>handler.parser.inlineParser.new().parse(i.trim()))))
+    //         }
+    //         return headerAndRows
+    //
+    //     },
+    //     recheck: raw => {
+    //         let rowNum: number | undefined
+    //         for (let line of raw.split(/\n/g).filter(l=>l.trim()!=="")) {
+    //             let newRowNum = line.split("|").length
+    //             if (rowNum !== undefined && newRowNum !== rowNum) return false
+    //             rowNum = newRowNum
+    //         }
+    //         return true
+    //     },
+    //     getProps: raw => {
+    //         let allRows = raw.split("\n").filter(r=>r!=="")
+    //         let column = allRows[0].split("|").map(h=>h.trim()).filter(h=>h!=="").length
+    //         let headerAligns: ("left"|"center"|"right")[] = Array(column).fill("center")
+    //         let rowAligns: ("left"|"center"|"right")[] = Array(column).fill("left")
+    //
+    //         if (allRows.length !== 1) {
+    //             let alignTags = allRows[1].split("|").map(i=>i.trim()).filter(i=>i!=="")
+    //             for (let [idx, tag] of alignTags.entries()) {
+    //                 // ---- header alignment
+    //                 if (/^:?\*[^*]+$/.test(tag)) {
+    //                     headerAligns[idx] = "left"
+    //                 } else if(/^[^*]+\*:?$/.test(tag)) {
+    //                     headerAligns[idx] = "right"
+    //                 } else if(/^:?\*[:-]+\*:?$/.test(tag)) {
+    //                     headerAligns[idx] = "center"
+    //                 }
+    //                 // ---- row alignment
+    //                 if (/^\*?:[^:]+$/.test(tag)) {
+    //                     rowAligns[idx] = "left"
+    //                 } else if(/^[^:]+:\*?$/.test(tag)) {
+    //                     rowAligns[idx] = "right"
+    //                 } else if(/^\*?:[*-]+:\*?$/.test(tag)) {
+    //                     rowAligns[idx] = "center"
+    //                 }
+    //             }
+    //         }
+    //         return {headerAligns, rowAligns}
+    //     }
+    // },
+    // Divider: {
+    //     tags: {exact: /---{1,4}(?:\[(?:dashed|dotted|solid)])?/},
+    //     order: 2, // ---- behind heading1
+    //     getProps: text => ({dividerType: (text.match(/dashed|dotted|solid/) ?? ["solid"])[0]})
+    // },
+    // CheckList: {
+    //     tags: {leading: / *- \[[ x]] /},
+    //     blockType: "container",
+    //     order:0,
+    //     getProps: text => ({isChecked: text.match(/(?: {2})*- \[[ x]] /)![0].includes("x")})
+    // },
+    // Image: {
+    //     tags: {exact: /!\[.+?]\(.+?(?: .+?)*? *\)|\[!\[.+?]\(.+?(?: .+?)*? *\)]\(.+?\)/},
+    //     parseContent: _ => undefined,
+    //     getProps: text => {
+    //         text = text.trim()
+    //         let linkUrl: string | undefined
+    //         if (/^\[!\[.+?]\(.+?(?: .+?)*? *\)]\(.+?\)$/.test(text)) {
+    //             // ---- with link
+    //             linkUrl = text.match(/\)]\(.+?\)$/)![0].replace(/[\]()]/g, "")
+    //             text = text.replace(/(^\[)|(]\([^\]]+?\)$)/g, "")
+    //         }
+    //         let altContent = text.match(/!\[.+?]/)![0].replace(/[![\]]/g, "")
+    //         let content: string = text.match(/\(.+?(?: .+?)*\)/)![0].replace(/[()]/g, "")
+    //         let splitContent: string[] = [
+    //             ...flattened(content.split(/".+?"/).map(c=>c.split(" ").map(i=>i.trim()))),
+    //             ...(content.match(/".+?"/g) ?? [])
+    //         ].filter(i=>i!=="")
+    //         let imageUrl = splitContent[0]
+    //         let otherProps = splitContent.slice(1)
+    //         let title = otherProps.filter(i=>/^".+?"$/.test(i))[0].replaceAll('"', "") ?? ""
+    //         let zoomSize = otherProps.filter(i=>/^[0-9]{1,3}%$/.test(i))[0] ?? "50%"
+    //         let alignment = otherProps.filter(i=>/^left|right|center$/.test(i))[0] ?? "left"
+    //         return {altContent, imageUrl, title, zoomSize, alignment, linkUrl}
+    //     }
+    // },
+    // MathBlock: {
+    //     tags: {round: "$$"},
+    //     parseContent: (text) =>  text
+    // },
+    // Latex: {
+    //     tags: {round: "$$$"},
+    //     parseContent: (text) => text.replace(/^\n|\n$/g, ""),
+    //     order: -1
+    // },
+    // Footnote: {
+    //     tags: {leading: /\[\^.+?]:/},
+    //     getProps: (text, state) => {
+    //         let noteName = text.match(/^\[\^.+?]:/)![0].replace(/[[\]:^]/g, "").trim()
+    //
+    //         if (state.footnoteArr === undefined) state.footnoteArr = {}
+    //         let footnoteArr = state.footnoteArr
+    //         if (footnoteArr[noteName] === undefined) {
+    //             footnoteArr[noteName] = 0
+    //         } else {
+    //             footnoteArr[noteName] += 1
+    //         }
+    //         return {
+    //             elementOrder: 100,
+    //             noteName,
+    //             footnoteIdx: footnoteArr[noteName],
+    //             rerender: true
+    //         }
+    //     },
+    // },
+    // LinkTagBlock: {
+    //     tags: {leading: /\[.+?]:/},
+    //     order: 2,
+    //     getProps: raw => ({
+    //         tagName: raw.match(/\[.+?]/)![0].replace(/[[\]]/g, "").trim(),
+    //         tagUrl: raw.replace(/\[.+?]:/, "").trim(),
+    //         visible: false
+    //     })
+    // },
+    // Comment: {
+    //     tags: {leading: /\/\//},
+    //     getProps: ()=>({visible: false})
+    // }
 
 
 }

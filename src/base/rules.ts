@@ -1,7 +1,7 @@
 import {blockDefaultRules, DefaultBlockRules, DefaultInlineRules, inlineDefaultRules} from "../parser/rules";
 import {BlockMarkdownTag, BlockMarkdownTagExtend} from "../parser/block/regex";
 import {InlineMarkdownTag, InlineMarkdownTagExtend} from "../parser/inline/regex";
-import {MarkdownerLogger} from "./logger";
+import {MarkitLogger} from "./logger";
 import {defaultInlineMap} from "../renderer/defaultRules/inline";
 import {MarkdownerViewFunc} from "../renderer/type";
 import {defaultBlockMap} from "../renderer/defaultRules/block";
@@ -58,7 +58,7 @@ export class RuleAdder {
         if (rule === "default") {
             rule = blockDefaultRules[name]
             if (rule === undefined) {
-                MarkdownerLogger.warn("Add block rule", `No default block rule of ruleName ${name}, skipping...`)
+                MarkitLogger.warn("Add block rule", `No default block rule of ruleName ${name}, skipping...`)
                 return
             }
         }
@@ -69,7 +69,7 @@ export class RuleAdder {
             if (view === "default") {
                 newView = defaultBlockMap[name]
                 if (view === undefined) {
-                    MarkdownerLogger.warn("Add block view", `No default block view of ruleName ${name}, skipping...`)
+                    MarkitLogger.warn("Add block view", `No default block view of ruleName ${name}, skipping...`)
                     return
                 }
             }
@@ -90,7 +90,7 @@ export class RuleAdder {
         if (rule === "default") {
             rule = inlineDefaultRules[name]
             if (rule === undefined) {
-                MarkdownerLogger.warn("Add inline rule", `No default inline rule of ruleName ${name}, skipping...`)
+                MarkitLogger.warn("Add inline rule", `No default inline rule of ruleName ${name}, skipping...`)
                 return
             }
         }
@@ -102,7 +102,7 @@ export class RuleAdder {
             if (view === "default") {
                 newView = defaultInlineMap[name]
                 if (newView === undefined) {
-                    MarkdownerLogger.warn("Add inline view", `No default inline view of ruleName ${name}, skipping...`)
+                    MarkitLogger.warn("Add inline view", `No default inline view of ruleName ${name}, skipping...`)
                     return
                 }
             }

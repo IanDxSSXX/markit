@@ -1,8 +1,9 @@
 import {generateMarkdownerAST as geneAST, MarkdownAST} from "../../base/ast";
 import {InlineTagHandler} from "./regex";
-import {inlineDefaultRules, InlineMarkdownRules} from "../rules";
+import {inlineDefaultRules} from "../rules";
 import {capturingRegExp} from "../../base/utils";
 import {uid} from "../../base/utils";
+import {InlineMarkdownRules} from "../types";
 
 export namespace C {
     // ---- allow for 10^16 tokens
@@ -41,7 +42,7 @@ export namespace C {
             let replacedContent: string = content
             for (let [storeIdx, rule] of this.usedRuleHandlers.entries()) {
                 let matchedArr: string[] = [];
-                replacedContent = replacedContent.replaceAll(capturingRegExp(rule.regexString), (str) => {
+                replacedContent = replacedContent.replace(capturingRegExp(rule.regexString), (str) => {
                     matchedArr.push(str)
                     return `<I${String(storeIdx).padStart(MAX_BASE,"0")}-${String(matchedArr.length-1).padStart(MAX_BASE,"0")}-${uuid}>`
                 })
@@ -87,7 +88,7 @@ export namespace C {
                     }
 
                     // ---- if not pass recheck, merge it to previous
-                    if (rule.useRecheckMatch && !rule.recheckMatch(rawContent)) {
+                    if (rule.useRecheckMatch && !rule.recheck(rawContent)) {
                         let preSyntaxTree = markdownASTs[markdownASTs.length-1]
                         if (!preSyntaxTree || preSyntaxTree.type !== "Text") {
                             markdownASTs.push(this.generateTextAST(rawContent))
@@ -128,6 +129,7 @@ export namespace C {
             if (this.usedRuleHandlers.length === 0) return [this.generateTextAST(content)]
 
             let [replacedContent, matchedStore] = this.split(content)
+            console.log(replacedContent)
             let [_, markdownASTs] = this.retriveMatchedStore(replacedContent, matchedStore)
 
             return markdownASTs

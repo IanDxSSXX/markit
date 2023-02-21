@@ -3,7 +3,7 @@ import {ASTHelper} from "./astHelper";
 import {IncrementalParse} from "./incrementalParse"
 import {blockDefaultRules, BlockMarkdownRules, inlineDefaultRules, InlineMarkdownRules} from "../parser/rules";
 import {MarkdownAST} from "./ast";
-import {MarkdownerLogger} from "./logger";
+import {MarkitLogger} from "./logger";
 import {defaultInlineMap} from "../renderer/defaultRules/inline";
 import {MarkdownerRuleMap} from "../renderer/type";
 import {defaultBlockMap} from "../renderer/defaultRules/block";
@@ -75,7 +75,7 @@ export class MarkitClass {
     }
 
     debug(level: number=0) {
-        MarkdownerLogger.setDebugLevel(level)
+        MarkitLogger.setDebugLevel(level)
     }
 
     render(content: string): string {
