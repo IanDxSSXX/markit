@@ -1,13 +1,11 @@
 import {ContainerItem, generateMarkdownerAST as geneAST, MarkdownAST} from "../../base/ast";
-import {
-    BlockTagHandler,
-} from "./regex";
 import {blockDefaultRules} from "../rules";
 import {capturingRegExp} from "../../base/utils";
 import {inlineDefaultRules} from "../rules";
 import {C as IC, MarkdownInlineParser} from "../inline/parser"
 import {BlockMarkdownRules, InlineMarkdownRules} from "../types";
 import {MarkitLogger} from "../../base/logger";
+import {BlockRuleHandler} from "./ruleHandler";
 
 
 export namespace C {
@@ -16,7 +14,7 @@ export namespace C {
         raw: string
         isContainer: boolean
         level: number
-        rule?: BlockTagHandler
+        rule?: BlockRuleHandler
         containerLevel?: number
         containerItems?: { item:BlockAST, content:BlockAST[] }[]
     }
@@ -103,8 +101,8 @@ export namespace C {
     }
 
     export class MarkdownBlockParser {
-        blockRuleHandlers: BlockTagHandler[] = []
-        usedRuleHandlerMap: {[key:string]: BlockTagHandler} = {}
+        blockRuleHandlers: BlockRuleHandler[] = []
+        usedRuleHandlerMap: {[key:string]: BlockRuleHandler} = {}
         splitString = ""
         blockRules: BlockMarkdownRules = {}
         inlineRules: InlineMarkdownRules = {}
@@ -127,7 +125,7 @@ export namespace C {
             this.inlineParser = MarkdownInlineParser(inlineRules, geneId)
 
             for (let ruleKey of Object.keys(blockRules)) {
-                this.blockRuleHandlers.push(new BlockTagHandler(ruleKey, blockRules[ruleKey], this.tabSpaceNum, this))
+                this.blockRuleHandlers.push(new BlockRuleHandler(ruleKey, blockRules[ruleKey], this.tabSpaceNum, this))
             }
             this.blockRuleHandlers = this.blockRuleHandlers.sort((a, b)=>a.order-b.order)
         }
@@ -139,7 +137,7 @@ export namespace C {
             let parse = (blockAST: BlockAST): {raw: string, trimedText: string, props: any} => {
                 let raw = trimNewLine(blockAST.raw)
 
-                let [props, trimedText] = BlockTagHandler.defaultGetProp(raw)
+                let [props, trimedText] = BlockRuleHandler.parseBlockProp(raw)
                 trimedText = blockAST.rule?.trimText(trimedText) ?? trimedText
                 if (this.softBreak && (blockAST.isContainer || blockAST.type === "Paragraph")) {
                     trimedText = trimedText.replace(/\n */g, " ").trim().replace(/\\$/g, "").trim()
@@ -215,6 +213,7 @@ export namespace C {
             let preBlockAST: BlockAST = {type: "NewLine", raw: "", level: 0, isContainer:false}
             let preIndent = 0
             let indentArr: number[] = [0]
+
             for (let blockAST of splitBlockASTs) {
                 if (blockAST.type === "NewLine") {
                     preBlockAST = blockAST
@@ -329,6 +328,9 @@ export namespace C {
         new() {
             let newParser = new MarkdownBlockParser(undefined, undefined, undefined, undefined, undefined, true)
             newParser.blockRuleHandlers = this.blockRuleHandlers
+            for (let blockRuleHandler of newParser.blockRuleHandlers) {
+                blockRuleHandler.parser = newParser
+            }
             newParser.blockRules = this.blockRules
             newParser.inlineRules = this.inlineRules
             newParser.tabSpaceNum = this.tabSpaceNum

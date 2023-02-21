@@ -1,7 +1,7 @@
 import {C as BC, MarkdownBlockParser} from "../parser/block/parser";
 import {ASTHelper} from "./astHelper";
 import {IncrementalParse} from "./incrementalParse"
-import {blockDefaultRules, BlockMarkdownRules, inlineDefaultRules, InlineMarkdownRules} from "../parser/rules";
+import {blockDefaultRules, inlineDefaultRules} from "../parser/rules";
 import {MarkdownAST} from "./ast";
 import {MarkitLogger} from "./logger";
 import {defaultInlineMap} from "../renderer/defaultRules/inline";
@@ -9,6 +9,7 @@ import {MarkdownerRuleMap} from "../renderer/type";
 import {defaultBlockMap} from "../renderer/defaultRules/block";
 import {RuleAdder, RuleDropper} from "./rules";
 import {Block} from "../renderer/render";
+import {BlockMarkdownRules, InlineMarkdownRules} from "../parser/types";
 
 
 interface MarkdownerProps {
@@ -89,5 +90,11 @@ export const Markit = new MarkitClass()
 export const incrementalParse = Markit.incrementalParse.bind(Markit)
 export const parse = Markit.parse.bind(Markit)
 export const render = Markit.render.bind(Markit)
+export const addBlockRule = Markit.addRule.block.bind(Markit.addRule)
+export const addInlineRule = Markit.addRule.inline.bind(Markit.addRule)
+export const dropBlockRule = Markit.dropRule.block.bind(Markit.dropRule)
+export const dropInlineRule = Markit.dropRule.inline.bind(Markit.dropRule)
+export const setProps = Markit.init.bind(Markit)
+
 
 Markit.init()

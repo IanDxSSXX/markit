@@ -1,22 +1,21 @@
 import {blockDefaultRules, DefaultBlockRules, DefaultInlineRules, inlineDefaultRules} from "../parser/rules";
-import {BlockMarkdownTag, BlockMarkdownTagExtend} from "../parser/block/regex";
-import {InlineMarkdownTag, InlineMarkdownTagExtend} from "../parser/inline/regex";
 import {MarkitLogger} from "./logger";
 import {defaultInlineMap} from "../renderer/defaultRules/inline";
 import {MarkdownerViewFunc} from "../renderer/type";
 import {defaultBlockMap} from "../renderer/defaultRules/block";
 import {MarkitClass} from "./markit";
+import {BlockMarkdownRule, InlineMarkdownRule} from "../parser/types";
 
 
 export interface MarkdownerBlockRuleInterface {
     name: string
-    rule: BlockMarkdownTag | BlockMarkdownTagExtend | "default"
+    rule: BlockMarkdownRule  | "default"
     view?: MarkdownerViewFunc | "default"
 }
 
 export interface MarkdownerInlineRuleInterface {
     name: string
-    rule: InlineMarkdownTag | InlineMarkdownTagExtend | "default"
+    rule: InlineMarkdownRule | "default"
     view?: MarkdownerViewFunc | "default"
 }
 
@@ -54,11 +53,11 @@ export class RuleAdder {
         this.markdowner = markdowner
     }
 
-    block({name,rule,view}:MarkdownerBlockRuleInterface) {
+    private singleBlock({name,rule,view}:MarkdownerBlockRuleInterface) {
         if (rule === "default") {
             rule = blockDefaultRules[name]
             if (rule === undefined) {
-                MarkitLogger.warn("Add block rule", `No default block rule of ruleName ${name}, skipping...`)
+                MarkitLogger.warn("Add block rule", `No default block rule of ruleName ${name}, skipping this rule...`)
                 return
             }
         }
@@ -68,9 +67,8 @@ export class RuleAdder {
             let newView: any = view
             if (view === "default") {
                 newView = defaultBlockMap[name]
-                if (view === undefined) {
-                    MarkitLogger.warn("Add block view", `No default block view of ruleName ${name}, skipping...`)
-                    return
+                if (newView === undefined) {
+                    MarkitLogger.warn("Add block view", `No default block view of ruleName ${name}`)
                 }
             }
             this.markdowner.blockRuleMap[name] = newView
@@ -79,18 +77,19 @@ export class RuleAdder {
         this.markdowner.init(this.markdowner.markdownerProps)
     }
 
-    blocks(addedBlocks:MarkdownerBlockRuleInterface[]) {
-        for (let block of addedBlocks) {
-            this.block(block)
+    block(addedBlock: MarkdownerBlockRuleInterface | MarkdownerBlockRuleInterface[]) {
+        if (!Array.isArray(addedBlock)) addedBlock = [addedBlock]
+        for (let block of addedBlock) {
+            this.singleBlock(block)
         }
     }
 
-    inline({name,rule,view}:MarkdownerInlineRuleInterface) {
+    private singleInline({name,rule,view}:MarkdownerInlineRuleInterface) {
         // ---- rule
         if (rule === "default") {
             rule = inlineDefaultRules[name]
             if (rule === undefined) {
-                MarkitLogger.warn("Add inline rule", `No default inline rule of ruleName ${name}, skipping...`)
+                MarkitLogger.warn("Add inline rule", `No default inline rule of ruleName ${name}, skipping this rule...`)
                 return
             }
         }
@@ -102,8 +101,7 @@ export class RuleAdder {
             if (view === "default") {
                 newView = defaultInlineMap[name]
                 if (newView === undefined) {
-                    MarkitLogger.warn("Add inline view", `No default inline view of ruleName ${name}, skipping...`)
-                    return
+                    MarkitLogger.warn("Add inline view", `No default inline view of ruleName ${name}`)
                 }
             }
             this.markdowner.inlineRuleMap[name] = newView
@@ -113,9 +111,10 @@ export class RuleAdder {
         this.markdowner.init(this.markdowner.markdownerProps)
     }
 
-    inlines(addedInlines:MarkdownerInlineRuleInterface[]) {
-        for (let inline of addedInlines) {
-            this.inline(inline)
+    inline(addedInline:MarkdownerInlineRuleInterface[]) {
+        if (!Array.isArray(addedInline)) addedInline = [addedInline]
+        for (let inline of addedInline) {
+            this.singleInline(inline)
         }
     }
 }

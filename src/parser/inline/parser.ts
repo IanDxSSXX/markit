@@ -1,5 +1,5 @@
 import {generateMarkdownerAST as geneAST, MarkdownAST} from "../../base/ast";
-import {InlineTagHandler} from "./regex";
+import {InlineRuleHandler} from "./ruleHandler";
 import {inlineDefaultRules} from "../rules";
 import {capturingRegExp} from "../../base/utils";
 import {uid} from "../../base/utils";
@@ -11,8 +11,8 @@ export namespace C {
     const uuid = uid()
 
     export class MarkdownInlineParser {
-        inlineRuleHandlers: InlineTagHandler[] = []
-        usedRuleHandlers: InlineTagHandler[] = []
+        inlineRuleHandlers: InlineRuleHandler[] = []
+        usedRuleHandlers: InlineRuleHandler[] = []
         retriveRegex = new RegExp(`(<I[0-9]{${MAX_BASE}}-[0-9]{${MAX_BASE}}-${uuid}>)`, "g")
         inlineRules: InlineMarkdownRules = {}
         state: {[key:string]:any} = {}
@@ -23,7 +23,7 @@ export namespace C {
             this.geneId = geneId
             this.inlineRules = inlineRules
             for (let ruleKey of Object.keys(inlineRules)) {
-                this.inlineRuleHandlers.push(new InlineTagHandler(ruleKey, inlineRules[ruleKey], this))
+                this.inlineRuleHandlers.push(new InlineRuleHandler(ruleKey, inlineRules[ruleKey], this))
             }
             this.inlineRuleHandlers = this.inlineRuleHandlers.sort((a, b)=>a.order-b.order)
 
@@ -129,7 +129,6 @@ export namespace C {
             if (this.usedRuleHandlers.length === 0) return [this.generateTextAST(content)]
 
             let [replacedContent, matchedStore] = this.split(content)
-            console.log(replacedContent)
             let [_, markdownASTs] = this.retriveMatchedStore(replacedContent, matchedStore)
 
             return markdownASTs
@@ -140,6 +139,9 @@ export namespace C {
             newParser.geneId = this.geneId
             newParser.inlineRules = this.inlineRules
             newParser.inlineRuleHandlers = this.inlineRuleHandlers
+            for (let inlineRuleHandler of newParser.inlineRuleHandlers) {
+                inlineRuleHandler.parser = newParser
+            }
             return newParser
         }
     }

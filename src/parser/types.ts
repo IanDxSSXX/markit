@@ -1,22 +1,22 @@
 
-export type TagType = RegExp | [RegExp, string]
+export type TagType = RegExp | RegExp[]
 
-export interface InlineMarkdownRule {
-    tag: TagType[] | TagType
+
+export interface MarkdownRule {
+    tag: TagType
     getProps?: (raw: string, state: {[key:string]:any}) => any
     trimText?: (raw: string) => string
     recheck?: (raw: string) => boolean
     order?: number
+}
+
+
+export interface InlineMarkdownRule extends MarkdownRule {
     allowNesting?: boolean
 }
 
 
-export interface BlockMarkdownRule {
-    tag: TagType[] | TagType
-    getProps?: (raw: string, state: {[key:string]: any}) => any
-    trimText?: (raw: string, ...args: any) => string
-    recheck?: (raw: string) => boolean
-    order?: number
+export interface BlockMarkdownRule extends MarkdownRule{
     parseContent?: (text: string, parseInline: any, parseBlock: any) => any
     blockType?: "container" | "leaf"
 }

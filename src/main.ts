@@ -1,21 +1,21 @@
-import Markit, {parse, render} from "./base";
+import Markit, {addBlockRule, parse, render} from "./base";
 
 const testStr = `
-# sf
-===
-sfok
+> sfsf  
+> 22  
+> > fsfsfsffsf
+> fs
+> * fsf
 
+
+oksfsf  
+hh
 `
 
-Markit.addRule.block({
+addBlockRule({
     name: "CodeBlock",
     rule: "default",
-    view: content => {
-        const newEl = document.createElement("div")
-        newEl.innerText = content
-        newEl.style.backgroundColor = "red"
-        return newEl
-    }
+    // view: "default"
 })
 
 // console.log(testStr)
@@ -29,6 +29,8 @@ const bb = render(testStr)
 
 document.getElementById("app")!.innerHTML = bb
 
-// const a = "1h2h3h4h5h6h7h8h9h10h11h12"
-// const b = /1(h)2(h)3(h)4(h)5(h)6(h)7(h)8(h)9(h)10(h)11(h)12/
-// console.log(a.replace(b, "$1$2$3$4$5$6$7$8$9$10$11$12$13"))
+const a = /^88(?:(h1)*)jj/g
+
+const b = "88h1h1h1h1jj"
+console.log(b.match(a))
+console.log(b.replace(a, ""))

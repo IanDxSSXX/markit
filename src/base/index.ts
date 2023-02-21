@@ -1,6 +1,2 @@
-import {Markit, parse, incrementalParse, render} from "./markit";
-
-
-export default Markit
-
-export {parse, incrementalParse, render}
+export * from "./markit";
+export {Markit as default} from "./markit"

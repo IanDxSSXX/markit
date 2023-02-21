@@ -1,6 +1,7 @@
 import {MarkdownerRuleMap} from "../type";
 import {ContainerItem, MarkdownAST} from "../../base/ast";
 import {Inline} from "../render";
+import Markit from "../../base";
 
 export const defaultBlockMap: MarkdownerRuleMap = {
     Paragraph: content => `<div>${content}</div>`,
@@ -44,7 +45,7 @@ export const defaultBlockMap: MarkdownerRuleMap = {
         "</blockquote>"
     ),
     Divider: (_, {dividerType}) => (
-      `<div style="margin: 15px 0px; border-top: 1px ${dividerType} #bbb; border-bottom: 1px ${dividerType} #bbb; border-radius: 1px; box-sizing: border-box; height: 2px; width: 100%/>`
+      `<div style="margin: 15px 0; border-top: 1px ${dividerType} #bbb; border-bottom: 1px ${dividerType} #bbb; border-radius: 1px; box-sizing: border-box; height: 2px; width: 100%"></div>`
     ),
     CheckList: (content: ContainerItem[], {isChecked}) =>(
             "<div>" +
@@ -77,6 +78,21 @@ export const defaultBlockMap: MarkdownerRuleMap = {
             )
         }
         return inDiv(imgStr)
-    }
+    },
+    Footnote: (content,  p) => {
+        const {noteName, footnoteIdx} = p
+        let footnoteSubTrees = Markit.ast
+            .findInlineItems("FootnoteSup", footnoteSup=>footnoteSup.content===noteName)
+        return (
+            `<div id="Markit-Footnote-${noteName}-${footnoteIdx}" style="font-size: small">` +
+                `<span style="white-space: pre-wrap">[${noteName}] </span>` +
+                content +
+                footnoteSubTrees.map((footnoteSup: MarkdownAST) =>
+                    `<a href="#Markit-FootnoteSup-${noteName}-${footnoteSup.props.footnoteSupId}" style="color: gray; text-decoration: none"> ↩ </a>`
+                ).join(" ") +
+            `</div>`
+        )
+
+    },
 
 }
