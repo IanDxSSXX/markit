@@ -1,5 +1,5 @@
-import {objectValid} from "./utils";
-import {uid} from "./utils";
+import { objectValid } from "./utils";
+import { uid } from "./utils";
 
 export interface ContainerItem {
     item: MarkdownAST[] | any
@@ -16,9 +16,9 @@ export interface MarkdownAST {
 }
 
 
-export function generateMarkdownerAST(geneId: boolean, type: string, level: "block"|"inline", raw: string,
-                                      content: string|MarkdownAST[]|ContainerItem[]|any, props?: any): MarkdownAST {
-    let syntaxTree: MarkdownAST = {type, level, raw, content}
+export function generateMarkitAST(geneId: boolean, type: string, level: "block" | "inline", raw: string,
+    content: string | MarkdownAST[] | ContainerItem[] | any, props?: any): MarkdownAST {
+    let syntaxTree: MarkdownAST = { type, level, raw, content }
     if (objectValid(props)) syntaxTree.props = props
     if (geneId) syntaxTree.id = uid()
 

@@ -1,9 +1,9 @@
-import {generateMarkdownerAST as geneAST, MarkdownAST} from "../../base/ast";
-import {InlineRuleHandler} from "./ruleHandler";
-import {inlineDefaultRules} from "../rules";
-import {capturingRegExp} from "../../base/utils";
-import {uid} from "../../base/utils";
-import {InlineMarkdownRules} from "../types";
+import { generateMarkitAST as geneAST, MarkdownAST } from "../../base/ast";
+import { InlineRuleHandler } from "./ruleHandler";
+import { inlineDefaultRules } from "../rules";
+import { capturingRegExp } from "../../base/utils";
+import { uid } from "../../base/utils";
+import { InlineMarkdownRules } from "../types";
 
 export namespace C {
     // ---- allow for 10^16 tokens
@@ -15,17 +15,17 @@ export namespace C {
         usedRuleHandlers: InlineRuleHandler[] = []
         retriveRegex = new RegExp(`(<I[0-9]{${MAX_BASE}}-[0-9]{${MAX_BASE}}-${uuid}>)`, "g")
         inlineRules: InlineMarkdownRules = {}
-        state: {[key:string]:any} = {}
+        state: { [key: string]: any } = {}
         geneId = false
 
-        constructor(inlineRules: InlineMarkdownRules = inlineDefaultRules, geneId=false, newInstance=false) {
+        constructor(inlineRules: InlineMarkdownRules = inlineDefaultRules, geneId = false, newInstance = false) {
             if (newInstance) return
             this.geneId = geneId
             this.inlineRules = inlineRules
             for (let ruleKey of Object.keys(inlineRules)) {
                 this.inlineRuleHandlers.push(new InlineRuleHandler(ruleKey, inlineRules[ruleKey], this))
             }
-            this.inlineRuleHandlers = this.inlineRuleHandlers.sort((a, b)=>a.order-b.order)
+            this.inlineRuleHandlers = this.inlineRuleHandlers.sort((a, b) => a.order - b.order)
 
         }
 
@@ -44,7 +44,7 @@ export namespace C {
                 let matchedArr: string[] = [];
                 replacedContent = replacedContent.replace(capturingRegExp(rule.regexString), (str) => {
                     matchedArr.push(str)
-                    return `<I${String(storeIdx).padStart(MAX_BASE,"0")}-${String(matchedArr.length-1).padStart(MAX_BASE,"0")}-${uuid}>`
+                    return `<I${String(storeIdx).padStart(MAX_BASE, "0")}-${String(matchedArr.length - 1).padStart(MAX_BASE, "0")}-${uuid}>`
                 })
 
                 matchedStore.push(matchedArr)
@@ -62,11 +62,11 @@ export namespace C {
                 isMatched = !isMatched
                 if (subContent === "") continue
                 if (isMatched) {
-                    let storeIdx = +subContent.slice(2, 2+MAX_BASE)
-                    let matchedArrIdx = +subContent.slice(3+MAX_BASE, 3+2*MAX_BASE)
+                    let storeIdx = +subContent.slice(2, 2 + MAX_BASE)
+                    let matchedArrIdx = +subContent.slice(3 + MAX_BASE, 3 + 2 * MAX_BASE)
                     let storeContent: string = matchedStore[storeIdx][matchedArrIdx]
                     let rule = this.usedRuleHandlers[storeIdx]
-                    let trimText =  rule.trimText(storeContent)
+                    let trimText = rule.trimText(storeContent)
 
                     let content;
 
@@ -89,7 +89,7 @@ export namespace C {
 
                     // ---- if not pass recheck, merge it to previous
                     if (rule.useRecheckMatch && !rule.recheck(rawContent)) {
-                        let preSyntaxTree = markdownASTs[markdownASTs.length-1]
+                        let preSyntaxTree = markdownASTs[markdownASTs.length - 1]
                         if (!preSyntaxTree || preSyntaxTree.type !== "Text") {
                             markdownASTs.push(this.generateTextAST(rawContent))
                         } else {
@@ -105,7 +105,7 @@ export namespace C {
                     }
                     retrivedContent += rawContent
                 } else {
-                    let preSyntaxTree = markdownASTs[markdownASTs.length-1]
+                    let preSyntaxTree = markdownASTs[markdownASTs.length - 1]
                     if (!preSyntaxTree || preSyntaxTree.type !== "Text") {
                         markdownASTs.push(this.generateTextAST(subContent))
                     } else {
@@ -147,6 +147,6 @@ export namespace C {
     }
 }
 
-export function MarkdownInlineParser(rules: InlineMarkdownRules={}, useDefault: boolean=true, geneId=false) {
+export function MarkdownInlineParser(rules: InlineMarkdownRules = {}, useDefault: boolean = true, geneId = false) {
     return new C.MarkdownInlineParser(rules, useDefault, geneId)
 }

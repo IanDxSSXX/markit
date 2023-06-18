@@ -13,7 +13,7 @@
 ## code
 `inline code`
 ## link
-Welcome to star Markdowner at [this repository](https://github.com/ian-dx/markdowner).
+Welcome to star Markit at [this repository](https://github.com/ian-dx/markit).
 ## highlight
 ==highlight this==
 ## subscript

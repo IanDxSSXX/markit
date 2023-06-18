@@ -1,11 +1,11 @@
-import {ContainerItem, generateMarkdownerAST as geneAST, MarkdownAST} from "../../base/ast";
-import {blockDefaultRules} from "../rules";
-import {capturingRegExp} from "../../base/utils";
-import {inlineDefaultRules} from "../rules";
-import {C as IC, MarkdownInlineParser} from "../inline/parser"
-import {BlockMarkdownRules, InlineMarkdownRules} from "../types";
-import {MarkitLogger} from "../../base/logger";
-import {BlockRuleHandler} from "./ruleHandler";
+import { ContainerItem, generateMarkitAST as geneAST, MarkdownAST } from "../../base/ast";
+import { blockDefaultRules } from "../rules";
+import { capturingRegExp } from "../../base/utils";
+import { inlineDefaultRules } from "../rules";
+import { C as IC, MarkdownInlineParser } from "../inline/parser"
+import { BlockMarkdownRules, InlineMarkdownRules } from "../types";
+import { MarkitLogger } from "../../base/logger";
+import { BlockRuleHandler } from "./ruleHandler";
 
 
 export namespace C {
@@ -16,7 +16,7 @@ export namespace C {
         level: number
         rule?: BlockRuleHandler
         containerLevel?: number
-        containerItems?: { item:BlockAST, content:BlockAST[] }[]
+        containerItems?: { item: BlockAST, content: BlockAST[] }[]
     }
     function trimNewLine(content: string) {
         return content.replace(new RegExp(`(^\\n)|(\\n$)`), "").trimEnd()
@@ -44,10 +44,10 @@ export namespace C {
             return this.containers.length === 0
         }
         get lastContainer() {
-            return this.containers[this.containers.length-1]
+            return this.containers[this.containers.length - 1]
         }
         get lastChild() {
-            return this.lastContainer.containerItems![this.lastContainer.containerItems!.length-1]
+            return this.lastContainer.containerItems![this.lastContainer.containerItems!.length - 1]
         }
 
         open(blockAST: BlockAST) {
@@ -102,20 +102,20 @@ export namespace C {
 
     export class MarkdownBlockParser {
         blockRuleHandlers: BlockRuleHandler[] = []
-        usedRuleHandlerMap: {[key:string]: BlockRuleHandler} = {}
+        usedRuleHandlerMap: { [key: string]: BlockRuleHandler } = {}
         splitString = ""
         blockRules: BlockMarkdownRules = {}
         inlineRules: InlineMarkdownRules = {}
         tabSpaceNum: number = 2
         softBreak: boolean = true
         inlineParser: IC.MarkdownInlineParser = new IC.MarkdownInlineParser({})
-        state: {[key:string]: any} = {}
+        state: { [key: string]: any } = {}
         geneId: boolean = false
 
         newLineRegexString = /(?:\n *| {2} *|\\)/.source
 
         constructor(blockRules: BlockMarkdownRules = blockDefaultRules, inlineRules: InlineMarkdownRules = inlineDefaultRules,
-                    tabSpaceNum=2, softBreak=true, geneId=false, newInstance=false) {
+            tabSpaceNum = 2, softBreak = true, geneId = false, newInstance = false) {
             if (newInstance) return
             this.geneId = geneId
             this.tabSpaceNum = tabSpaceNum
@@ -127,14 +127,14 @@ export namespace C {
             for (let ruleKey of Object.keys(blockRules)) {
                 this.blockRuleHandlers.push(new BlockRuleHandler(ruleKey, blockRules[ruleKey], this.tabSpaceNum, this))
             }
-            this.blockRuleHandlers = this.blockRuleHandlers.sort((a, b)=>a.order-b.order)
+            this.blockRuleHandlers = this.blockRuleHandlers.sort((a, b) => a.order - b.order)
         }
 
-        private generateMarkdownerAST(type: string, raw: string, content: MarkdownAST[] | ContainerItem[] | any, props?: any): MarkdownAST {
+        private generateMarkitAST(type: string, raw: string, content: MarkdownAST[] | ContainerItem[] | any, props?: any): MarkdownAST {
             return geneAST(this.geneId, type, "block", raw, content, props)
         }
         private geneMarkdownAST(blockAST: BlockAST): MarkdownAST {
-            let parse = (blockAST: BlockAST): {raw: string, trimedText: string, props: any} => {
+            let parse = (blockAST: BlockAST): { raw: string, trimedText: string, props: any } => {
                 let raw = trimNewLine(blockAST.raw)
 
                 let [props, trimedText] = BlockRuleHandler.parseBlockProp(raw)
@@ -145,22 +145,22 @@ export namespace C {
                     trimedText = trimedText.trim()
                 }
 
-                return {raw, trimedText, props}
+                return { raw, trimedText, props }
             }
-            let {raw, trimedText, props} = parse(blockAST)
+            let { raw, trimedText, props } = parse(blockAST)
 
             let content: any
-            props = {...props, ...blockAST.rule?.getProps(raw) ?? {}}
+            props = { ...props, ...blockAST.rule?.getProps(raw) ?? {} }
 
             if (blockAST.isContainer) {
-                content = blockAST.containerItems!.map(({item, content}): ContainerItem => {
-                    let {trimedText} = parse(item)
+                content = blockAST.containerItems!.map(({ item, content }): ContainerItem => {
+                    let { trimedText } = parse(item)
                     return {
                         item: item.rule?.parseContent(trimedText) ?? [this.inlineParser!.generateTextAST(trimedText)],
-                        content: content.map(c=>this.geneMarkdownAST(c))
+                        content: content.map(c => this.geneMarkdownAST(c))
                     }
-                } )
-                props = {...props, level: blockAST.level}
+                })
+                props = { ...props, level: blockAST.level }
             } else {
                 if (!!blockAST.rule) {
                     content = blockAST.rule!.parseContent(trimedText)
@@ -169,7 +169,7 @@ export namespace C {
                 }
             }
 
-            return this.generateMarkdownerAST(blockAST.type, raw, content, props)
+            return this.generateMarkitAST(blockAST.type, raw, content, props)
         }
 
         split(content: string) {
@@ -187,9 +187,9 @@ export namespace C {
                 if (block === "") continue
                 let blockAST: BlockAST
                 if (new RegExp(`^${this.newLineRegexString}$`, "g").test(block)) {
-                    blockAST = {type: "NewLine", raw: block, isContainer: false, level:0}
+                    blockAST = { type: "NewLine", raw: block, isContainer: false, level: 0 }
                 } else {
-                    blockAST = {type: "Paragraph", raw: block, isContainer: false, level:0}
+                    blockAST = { type: "Paragraph", raw: block, isContainer: false, level: 0 }
                     if (isMatched) {
                         for (let rule of Object.values(this.usedRuleHandlerMap)) {
                             if (rule.regex.test(block) && rule.recheck(block)) {
@@ -210,7 +210,7 @@ export namespace C {
 
             let blockASTs: BlockAST[] = []
             let container = new Container()
-            let preBlockAST: BlockAST = {type: "NewLine", raw: "", level: 0, isContainer:false}
+            let preBlockAST: BlockAST = { type: "NewLine", raw: "", level: 0, isContainer: false }
             let preIndent = 0
             let indentArr: number[] = [0]
 
@@ -225,7 +225,7 @@ export namespace C {
                 if (subtractedIndent < 0) {
                     blockAST.level = 0
                     for (let [idx, _] of indentArr.entries()) {
-                        if (newIndent > indentArr[idx]+this.tabSpaceNum-1) {
+                        if (newIndent > indentArr[idx] + this.tabSpaceNum - 1) {
                             blockAST.level = idx + 1
                             break
                         }
@@ -235,7 +235,7 @@ export namespace C {
                 } else {
                     blockAST.level = preBlockAST.level! + 1
                 }
-                indentArr[blockAST.level] = Math.max(newIndent, indentArr[blockAST.level]??0)
+                indentArr[blockAST.level] = Math.max(newIndent, indentArr[blockAST.level] ?? 0)
                 preIndent = newIndent
 
                 if (blockAST.level > container.level + 1) {
@@ -246,7 +246,7 @@ export namespace C {
                 }
 
                 if (blockAST.type === "Paragraph" && preBlockAST.type !== "NewLine" &&
-                    (preBlockAST.isContainer||["Paragraph", "AppendText"].includes(preBlockAST.type))) {
+                    (preBlockAST.isContainer || ["Paragraph", "AppendText"].includes(preBlockAST.type))) {
                     blockAST.type = "AppendText"
                 }
 
@@ -254,7 +254,7 @@ export namespace C {
                     if (container.level !== -1) {
                         container.addText(blockAST)
                     } else {
-                        blockASTs[blockASTs.length-1].raw += blockAST.raw
+                        blockASTs[blockASTs.length - 1].raw += blockAST.raw
                     }
 
                     preBlockAST = blockAST
@@ -309,7 +309,7 @@ export namespace C {
                     this.usedRuleHandlerMap[rule.ruleName] = rule
                 }
             }
-            let splitStrings = Object.values(this.usedRuleHandlerMap).map(rule=>rule.regexString)
+            let splitStrings = Object.values(this.usedRuleHandlerMap).map(rule => rule.regexString)
             splitStrings.unshift(`(?:${this.newLineRegexString}(?=\\n|$))`)
             this.splitString = splitStrings.join("|")
 
@@ -343,7 +343,7 @@ export namespace C {
     }
 }
 
-export function MarkdownBlockParser(rules: BlockMarkdownRules={}, inlineRules: InlineMarkdownRules=inlineDefaultRules,
-                                    tabSpaceNum: number=2, softBreak=true, geneId=false) {
+export function MarkdownBlockParser(rules: BlockMarkdownRules = {}, inlineRules: InlineMarkdownRules = inlineDefaultRules,
+    tabSpaceNum: number = 2, softBreak = true, geneId = false) {
     return new C.MarkdownBlockParser(rules, inlineRules, tabSpaceNum, softBreak, geneId)
 }

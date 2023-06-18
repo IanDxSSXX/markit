@@ -142,7 +142,7 @@ export const blockDefaultRules: BlockMarkdownRules = {
         blockType: "container"
     },
     Blockquote: {
-        tag: /(?:> .+?\n)*> .+?(?=\n|$)/,
+        tag: /(?:\n|^)(?:> .+?\n)*> .+?(?=\n|$)/,
         parseContent: (text, blockParse) => {
             let newText = text.replace(/\n> */g, "\n").replace(/^> */g, "")
             return blockParse(newText)
@@ -159,7 +159,8 @@ export const blockDefaultRules: BlockMarkdownRules = {
             const text = raw.replace(/ *```|```$/g, "")
             const language = (text.match(/^.+?\n/g) ?? ["text"])[0].replace("```", "").trim()
             return {language}
-        }
+        },
+        order: 0
     },
     Table: {
         tag: / *\|(?:.+?\|)+\n *\|(?: *[-*:]{1,2}-+[-*:]{1,2}? *\|)+(?:\n *\|(?:.+?\|)+)*/,
@@ -289,6 +290,7 @@ export const blockDefaultRules: BlockMarkdownRules = {
     },
     Comment: {
         tag: BRegHelper.leading(/\/\//),
+        order: 100,
         getProps: ()=>({visible: false})
     }
 

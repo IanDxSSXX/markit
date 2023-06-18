@@ -1,13 +1,13 @@
-import {MarkdownAST} from "./ast";
-import {MarkitClass} from "./markit";
+import { MarkdownAST } from "./ast";
+import { MarkitClass } from "./markit";
 
 
 export class ASTHelper {
     trees: MarkdownAST[] = []
-    markdowner: MarkitClass
+    markit: MarkitClass
 
-    constructor(markdowner: MarkitClass) {
-        this.markdowner = markdowner
+    constructor(markit: MarkitClass) {
+        this.markit = markit
     }
 
     flatten() {
@@ -25,12 +25,12 @@ export class ASTHelper {
         return flatASTs
     }
 
-    findInlineItems(typeName: string, condition: (inlineAST: MarkdownAST) => boolean=()=>true) {
-        return this.flatten().filter(t=>t.type===typeName && condition(t))
+    findInlineItems(typeName: string, condition: (inlineAST: MarkdownAST) => boolean = () => true) {
+        return this.flatten().filter(t => t.type === typeName && condition(t))
     }
 
-    findBlocks(typeName: string, condition: (blockAST: MarkdownAST) => boolean=()=>true) {
-        return this.trees.filter(t=>t.type===typeName && condition(t))
+    findBlocks(typeName: string, condition: (blockAST: MarkdownAST) => boolean = () => true) {
+        return this.trees.filter(t => t.type === typeName && condition(t))
     }
 }
 

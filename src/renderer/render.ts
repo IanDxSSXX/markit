@@ -1,35 +1,35 @@
-import {MarkdownAST} from "../base/ast";
-import {MarkitLogger} from "../base/logger";
-import {defaultInlineMap} from "./defaultRules/inline";
-import {defaultBlockMap} from "./defaultRules/block";
-export const MarkdownerMapBlock: {value?: any} = {}
-export const MarkdownerMapInline: {value?: any} = {}
+import { MarkdownAST } from "../base/ast";
+import { MarkitLogger } from "../base/logger";
+import { defaultInlineMap } from "./defaultRules/inline";
+import { defaultBlockMap } from "./defaultRules/block";
+export const MarkitMapBlock: { value?: any } = {}
+export const MarkitMapInline: { value?: any } = {}
 
 
 
 export function resolveInlineContent(content: any): any {
     // ---- 只有当content和raw不相等时，才做转义，因为可以判断出里面的字符串全是inner的
-    if (content instanceof Array && content.length>0 && content[0].level==="inline") {
+    if (content instanceof Array && content.length > 0 && content[0].level === "inline") {
         return Inline(content)
     }
     return content
 }
 export function resolveBlockContent(content: any): any {
-    if (content instanceof Array && content.length>0) {
-        if (content[0].level==="inline") {
+    if (content instanceof Array && content.length > 0) {
+        if (content[0].level === "inline") {
             content = Inline(content)
-        } else if (content[0].level==="block") {
+        } else if (content[0].level === "block") {
             content = Block(content)
         } else if (content[0].item) {
-            content = content.map(({item, content}) => ({item: Inline(item), content: Block(content)}))
+            content = content.map(({ item, content }) => ({ item: Inline(item), content: Block(content) }))
         }
     }
     return content
 }
 
 
-function InlineElement(markdownAST: MarkdownAST ) {
-    let map = MarkdownerMapInline.value ?? defaultInlineMap
+function InlineElement(markdownAST: MarkdownAST) {
+    let map = MarkitMapInline.value ?? defaultInlineMap
     let inlineFunc = map[markdownAST.type]
     let element
     if (inlineFunc) {
@@ -55,7 +55,7 @@ export function Inline(inlineASTs: MarkdownAST[]) {
 }
 
 function BlockElement(markdownAST: MarkdownAST) {
-    let map = MarkdownerMapBlock.value ?? defaultBlockMap
+    let map = MarkitMapBlock.value ?? defaultBlockMap
     let blockFunc = map[markdownAST.type]
     let element
     if (!!blockFunc) {

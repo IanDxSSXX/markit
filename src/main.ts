@@ -1,15 +1,16 @@
-import Markit, {addBlockRule, parse, render} from "./base";
+import {addBlockRule, parse, render} from "./base";
 
 const testStr = `
-> sfsf  
-> 22  
-> > fsfsfsffsf
-> fs
-> * fsf
+
+* fsf
+* fs 
+> sf
+\`\`\`js
+> fsf
+
+\`\`\`
 
 
-oksfsf  
-hh
 `
 
 addBlockRule({
