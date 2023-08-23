@@ -62,7 +62,7 @@ export class RuleAdder {
             }
         }
 
-        this.markit.blockRules[name] = rule
+        this.markit.blockRules[name] = { ...this.markit.blockRules[name], ...rule }
         if (view) {
             let newView: any = view
             if (view === "default") {
@@ -93,7 +93,7 @@ export class RuleAdder {
                 return
             }
         }
-        this.markit.inlineRules[name] = rule
+        this.markit.inlineRules[name] = { ...this.markit.inlineRules[name], ...rule }
 
         if (view) {
             // ---- react view
