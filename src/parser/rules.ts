@@ -246,7 +246,7 @@ export const blockDefaultRules: BlockMarkdownRules = {
             let imageUrl = splitContent[0]
             let otherProps = splitContent.slice(1)
             let title = otherProps.filter(i=>/^".+?"$/.test(i))[0].replaceAll('"', "") ?? ""
-            let zoomSize = otherProps.filter(i=>/^[0-9]{1,3}%$/.test(i))[0] ?? "50%"
+            let zoomSize = otherProps.filter(i=>/^[0-9]{1,3}%$/.test(i))[0] ?? "100%"
             let alignment = otherProps.filter(i=>/^left|right|center$/.test(i))[0] ?? "left"
             return {altContent, imageUrl, title, zoomSize, alignment, linkUrl}
         }
